@@ -11,12 +11,90 @@
 
 using namespace std;
 
-int global_counter = 4;
-Vector2 initPosition;
 Vector2 initPlayerPosition;
-float initSize = 10;
-float initsize2 = 1;
 
+//MARK: BACKGROUND
+
+class DarkVoid {
+public:
+
+    int size = 1;
+    int growValue = 20;
+    bool black = true;
+
+    bool growVoid() {
+
+        if (size < 800){
+
+            if (black){
+                DrawCircle(200,200,size,BLACK);
+            }
+            else {
+                DrawCircle(200,200,size,WHITE);
+            }
+
+            size += growValue;
+        }
+        else {
+            size = 1;
+            black = !black;
+        }
+        return black;
+    }
+
+
+};
+
+
+//MARK: EXPLOSION
+
+
+class Explosion {
+
+public:
+
+    Vector2 explosionLocation;
+    float explosionSize;
+
+    Explosion(Vector2 location,float size){
+
+        explosionLocation = location;
+        explosionSize = size;
+
+    }
+
+
+    void update() {
+
+        if (explosionSize < 300){
+        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
+        explosionSize += 0.5;
+        }
+
+    }
+
+
+};
+
+
+class FxAdmin {
+public:
+    std::vector <Explosion> explosions;
+
+    void updateExplosions(){
+
+        for (Explosion explosion : explosions){
+
+            explosion.update();
+
+        }
+
+    } 
+
+
+};
+
+//MARK: ENEMY
 
 class Enemy {
 public:
@@ -29,6 +107,8 @@ public:
     float size;
 
     int enemylevel;
+    FxAdmin fxadmin;
+
 
     Enemy(Vector2 initlocation, float speedInit, int level){
 
@@ -86,6 +166,13 @@ public:
 
     }
 
+    void explode(){
+
+        Explosion newexplosion = Explosion(this->location,this->size);
+        fxadmin.explosions.push_back(newexplosion);
+
+    }
+
     void moveEnemy(){
 
         initLoc.y += speed; 
@@ -108,11 +195,15 @@ public:
 
 };
 
+
+//MARK: ENEMYGEN
+
 class EnemyGen {
 public:
 
     std::vector <Enemy> enemies;
     int timer = 50;
+    FxAdmin fxadmin;
 
     public: void funcTimer(){
 
@@ -144,7 +235,7 @@ public:
         int random_int = int_dis(gen);
         cout << random_int << endl;
         
-        Enemy newEnemy = Enemy(newLocation,5,random_int);
+        Enemy newEnemy = Enemy(newLocation ,5.0f , random_int);
         enemies.push_back(newEnemy);
 
     } 
@@ -168,6 +259,7 @@ public:
 
 };
 
+//MARK: PLAYER
 
 class Player {
 public:
@@ -201,7 +293,7 @@ public:
         {
             case 3: // location: TOP FACE
                 DrawEllipse(location.x,location.y,10.0f,15.0f,turbinaColor);
-                DrawEllipse(location.x+40,location.y,10.0f,15.0f,turbinaColor);
+                DrawEllipse(location.x+50,location.y,10.0f,15.0f,turbinaColor);
                 cout << "dibujando turbina de arriba"<< endl;
                 break;
 
@@ -302,6 +394,7 @@ public:
 
             vida -= enemy.enemylevel;
             damaged = true;
+            enemy.explode();
 
         }
         }
@@ -320,30 +413,19 @@ public:
 
 };
 
-void dibujarCirculo(Vector2 location, float size, bool darks){
-
-    if (darks){
-        DrawCircleV(location,size,BLACK);
-    }
-    else{
-        DrawCircleV(location,size,WHITE);
-    }
-    
-}
+//MARK: MAIN PROGRAM
 
 int main() {
     const int screenWidth = 800;
     const int screenHeight = 600;
-	const string playerName = "puta";
+	const string playerName = "Player 1";
 	int playerPunteo = 200;
 	
 
-    InitWindow(screenWidth, screenHeight, "Juego con raylib en C++");
+    InitWindow(screenWidth, screenHeight, "Ship Dodger");
 
     SetTargetFPS(60);
 
-    
-    initPosition = {200,200};
     initPlayerPosition = {screenWidth/2,400};
 
     Player player = Player();
@@ -354,28 +436,31 @@ int main() {
     string valor;
 
     EnemyGen enemygenerator = EnemyGen();
+    
+    DarkVoid background_void = DarkVoid();
+    FxAdmin fxadmin1 = FxAdmin();
+    enemygenerator.fxadmin = fxadmin1;
 
     while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        dibujarCirculo(initPosition,initSize,true);
 
-        if (initSize < 500){
-            initSize += 1;
+        BeginDrawing();
+        
+        if (background_void.growVoid()){
+            ClearBackground(WHITE);
         }
         else {
-            initsize2 += 1;
-            dibujarCirculo(initPosition,initsize2,false);
+            ClearBackground(BLACK);
         }
-
 
         valor = to_string(player.vida);
 
         enemygenerator.update();
         player.updatePlayer(enemygenerator);
+        fxadmin1.updateExplosions();
         
 
 		DrawText("LIFE POINTS: ", 190, 220, 30, MAROON);
+        DrawText("SHIP DODGER 9000",5,5,40,BLUE);
 		DrawText(valor.c_str(), 190, 260, 40, LIME);
 		
         EndDrawing();
