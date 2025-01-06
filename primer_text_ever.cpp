@@ -144,6 +144,7 @@ public:
 
 };
 
+//CREAR SINGLETON DE FXADMIN MEJOR
 FxAdmin fxadminmain = FxAdmin();
 
 
@@ -165,16 +166,14 @@ public:
     FxAdmin fxadmin;
     
 
-    Enemy(Vector2 initlocation, float speedInit, int level, auto& fx){
+    Enemy(Vector2 initlocation, float speedInit, int level){
 
         initLoc = initlocation;
         speed = speedInit;
         enemyRect = {initLoc.x,initLoc.y,50,50};
         enemylevel = level;
         active = true;
-        fxadmin = fx;
    
-
         enemyLevels(enemylevel);
 
     }
@@ -291,14 +290,8 @@ public:
 
     std::vector <Enemy> enemies;
     int timer = 50;
-    FxAdmin fxadmin;
 
-    EnemyGen(auto& fx){
-
-        fxadmin = fx;
-
-
-    }
+    EnemyGen();
 
     void funcTimer(){
 
@@ -310,14 +303,14 @@ public:
 
         else if (timer <= 0) {
 
-            generateEnemy(fxadmin);
+            generateEnemy();
             timer = 50;
 
         }
 
     }
 
-    void generateEnemy(auto& fx){
+    void generateEnemy(){
 
         random_device rd; 
         mt19937 gen(rd()); 
@@ -329,7 +322,7 @@ public:
         std::uniform_int_distribution<> int_dis(1, 5); 
         int random_int = int_dis(gen);
         
-        Enemy newEnemy = Enemy(newLocation ,5.0f ,random_int,fxadmin);
+        Enemy newEnemy = Enemy(newLocation ,5.0f ,random_int);
         enemies.push_back(newEnemy);
 
     } 
@@ -600,8 +593,7 @@ int main() {
     string explosionString;
     
     DarkVoid background_void = DarkVoid();
-    FxAdmin fxadmin1 = FxAdmin();
-    EnemyGen enemygenerator = EnemyGen(fxadmin1);
+    EnemyGen enemygenerator = EnemyGen(fxadminmain);
 
 
     while (!WindowShouldClose()) {
@@ -618,7 +610,7 @@ int main() {
         if (dSystem){
 
             enemiesString = "Active Enemies: " + to_string(enemygenerator.enemies.size());
-            explosionString = "Active Explosions: " + to_string(fxadmin1.explosions.size());
+            explosionString = "Active Explosions: " + to_string(fxadminmain.explosions.size());
 
             DrawText(enemiesString.c_str(),5,30,20,RED);
             DrawText(explosionString.c_str(),5,60,20,RED);
@@ -642,7 +634,7 @@ int main() {
             drawGameOver();
         }
 
-        fxadmin1.updateExplosions();
+									fxadminmain.updateExplosions();
         
 		DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
         DrawText("SHIP DODGER 9000",5,5,40,BLUE);
