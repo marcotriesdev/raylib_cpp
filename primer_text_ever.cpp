@@ -11,6 +11,9 @@
 
 using namespace std;
 
+int main();
+
+class FxAdmin; 
 
 const int screenWidth = 800;
 const int screenHeight = 600;
@@ -18,6 +21,7 @@ Vector2 initPlayerPosition;
 
 bool paused = false;
 bool dSystem = false;
+bool dead = false;
 
 //MARK: BACKGROUND
 
@@ -61,21 +65,50 @@ public:
 
     Vector2 explosionLocation;
     float explosionSize;
+    int growspeed;
+    bool ended;
 
     Explosion(Vector2 location,float size){
 
         explosionLocation = location;
         explosionSize = size;
+        growspeed = 50;
+        ended = false;
+
+        initCout();
 
     }
 
+    void initCout(){
+
+        cout << "expllosion initialized" << endl;
+    }
+
+    void grow(){
+
+        if (explosionSize < 1000){
+            explosionSize += growspeed;
+        }
+        else {
+
+            ended = true;
+            cout << "explosion ended";
+        }
+
+    }
+
+    void draw() {
+
+        DrawCircle(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
+
+    }
 
     void update() {
 
-        
-        DrawCircle(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
-        
-
+        if (!ended){
+        grow();
+        draw();
+        }
     }
 
 
@@ -111,6 +144,9 @@ public:
 
 };
 
+FxAdmin fxadminmain = FxAdmin();
+
+
 //MARK: ENEMY
 
 class Enemy {
@@ -126,15 +162,17 @@ public:
 
     bool active;
     int enemylevel;
+    FxAdmin fxadmin;
     
 
-    Enemy(Vector2 initlocation, float speedInit, int level){
+    Enemy(Vector2 initlocation, float speedInit, int level, auto& fx){
 
         initLoc = initlocation;
         speed = speedInit;
         enemyRect = {initLoc.x,initLoc.y,50,50};
         enemylevel = level;
         active = true;
+        fxadmin = fx;
    
 
         enemyLevels(enemylevel);
@@ -187,8 +225,8 @@ public:
     void explode(){
 
         active = false;
-        cout << "state of enemy: " << active << endl;
         cout << "created explosion BOOM" << endl;
+        fxadminmain.addExplosion(initLoc, size);
         
 
     }
@@ -255,7 +293,7 @@ public:
     int timer = 50;
     FxAdmin fxadmin;
 
-    EnemyGen(FxAdmin fx){
+    EnemyGen(auto& fx){
 
         fxadmin = fx;
 
@@ -272,14 +310,14 @@ public:
 
         else if (timer <= 0) {
 
-            generateEnemy();
+            generateEnemy(fxadmin);
             timer = 50;
 
         }
 
     }
 
-    void generateEnemy(){
+    void generateEnemy(auto& fx){
 
         random_device rd; 
         mt19937 gen(rd()); 
@@ -291,7 +329,7 @@ public:
         std::uniform_int_distribution<> int_dis(1, 5); 
         int random_int = int_dis(gen);
         
-        Enemy newEnemy = Enemy(newLocation ,5.0f ,random_int);
+        Enemy newEnemy = Enemy(newLocation ,5.0f ,random_int,fxadmin);
         enemies.push_back(newEnemy);
 
     } 
@@ -522,9 +560,19 @@ public:
 
 void drawGameOver(){
 
-    Color gameoverColor = Color(0,0,0,255);
+    //Color gameoverColor = Color(0,0,0,255);
 
     DrawText("Game Over",screenWidth/3,screenHeight/2,40,RED);
+
+    DrawText("Press (R) to restart",screenWidth/3-50,screenHeight/2 + 100,45,RED);
+
+
+    if (IsKeyPressed(KEY_R)){
+
+        dead = false;
+        main();
+
+    }
 
 }
 
@@ -585,15 +633,20 @@ int main() {
             player.updatePlayer(enemygenerator);
         }
         else{
+
+            if (!dead) {
             fxadmin1.addExplosion(player.location,50);
+            dead = true;
+            }
+
             drawGameOver();
         }
 
         fxadmin1.updateExplosions();
         
-		DrawText("LIFE POINTS: ", 190, 220, 30, MAROON);
+		DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
         DrawText("SHIP DODGER 9000",5,5,40,BLUE);
-		DrawText(valor.c_str(), 190, 260, 40, LIME);
+		DrawText(valor.c_str(), 30, 150, 40, LIME);
 		
         EndDrawing();
     }
