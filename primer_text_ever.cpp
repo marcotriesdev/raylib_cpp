@@ -180,8 +180,6 @@ public:
                 speed = 8;
                 break;
 
-
-
         }
 
     }
@@ -455,6 +453,13 @@ public:
 
         }
 
+        if (IsKeyPressed(KEY_K)){
+
+            vida -= 90;
+            cout << "KILLED HIMSELF" << endl;
+
+        }
+
         calculateFric();
         normalizeLocation();
 
@@ -500,18 +505,28 @@ public:
             }
         }
     }
-    public: void updatePlayer(auto group) {
+    public: void updatePlayer(auto& group) {
 
         runTimer();
         //cout << damageTimer << endl;
-        input();
         checkCollision(group);
+        input();
         dibujarTurbina();
         dibujarPlayer();
 
     }
 
 };
+
+//MARK: GAME OVER
+
+void drawGameOver(){
+
+    Color gameoverColor = Color(0,0,0,255);
+
+    DrawText("Game Over",screenWidth/3,screenHeight/2,40,RED);
+
+}
 
 //MARK: MAIN PROGRAM
 
@@ -565,10 +580,17 @@ int main() {
         valor = to_string(player.vida);
 
         enemygenerator.update();
-        player.updatePlayer(enemygenerator);
+
+        if (player.vida > 0){
+            player.updatePlayer(enemygenerator);
+        }
+        else{
+            fxadmin1.addExplosion(player.location,50);
+            drawGameOver();
+        }
+
         fxadmin1.updateExplosions();
         
-
 		DrawText("LIFE POINTS: ", 190, 220, 30, MAROON);
         DrawText("SHIP DODGER 9000",5,5,40,BLUE);
 		DrawText(valor.c_str(), 190, 260, 40, LIME);
