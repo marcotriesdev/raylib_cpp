@@ -11,7 +11,13 @@
 
 using namespace std;
 
+
+const int screenWidth = 800;
+const int screenHeight = 600;
 Vector2 initPlayerPosition;
+
+bool paused = false;
+bool dSystem = false;
 
 //MARK: BACKGROUND
 
@@ -19,7 +25,7 @@ class DarkVoid {
 public:
 
     int size = 1;
-    int growValue = 20;
+    int growValue = 8;
     bool black = true;
 
     bool growVoid() {
@@ -66,10 +72,9 @@ public:
 
     void update() {
 
-        if (explosionSize < 300){
-        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
-        explosionSize += 0.5;
-        }
+        
+        DrawCircle(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
+        
 
     }
 
@@ -81,11 +86,23 @@ class FxAdmin {
 public:
     std::vector <Explosion> explosions;
 
-    void updateExplosions(){
 
-        for (Explosion explosion : explosions){
+    void addExplosion(Vector2 location, int size){
+
+        Explosion newexplosion = Explosion(location,size);
+        explosions.push_back(newexplosion);
+        cout << "numero de explosiones: " << explosions.size() << endl;
+
+    }
+
+    void updateExplosions(){
+        //cout << "probando probando fxadmin" << endl;
+        //cout << "numero de explosiones: " << explosions.size() << endl;
+        for (auto& explosion : explosions){
 
             explosion.update();
+            
+            
 
         }
 
@@ -104,11 +121,12 @@ public:
     float speed;
     Rectangle enemyRect;
     Color enemyColor;
+    string colorName;
     float size;
 
+    bool active;
     int enemylevel;
-    FxAdmin fxadmin;
-
+    
 
     Enemy(Vector2 initlocation, float speedInit, int level){
 
@@ -116,6 +134,8 @@ public:
         speed = speedInit;
         enemyRect = {initLoc.x,initLoc.y,50,50};
         enemylevel = level;
+        active = true;
+   
 
         enemyLevels(enemylevel);
 
@@ -127,37 +147,37 @@ public:
 
             case 1:
                 enemyColor = ORANGE;
+                colorName = "Orange";
                 size = 50.0f;
                 speed = 5;
-                cout << "enemy is level 1 and orange"<< endl;
                 break;
 
             case 2:
                 enemyColor = LIGHTGRAY;
+                colorName = "Lightgray";
                 size = 80.0f;
                 speed = 7;
-                cout << "enemy is level 2 and gray"<< endl;
                 break;
 
             case 3:
                 enemyColor = DARKGREEN;
+                colorName = "Darkgreen";
                 size = 90.0f;
                 speed = 10;
-                cout << "enemy is level 3 and dark green"<< endl;
                 break;
 
             case 4:
                 enemyColor = DARKBLUE;
+                colorName = "Darkblue";
                 size = 95.0f;
                 speed = 7;
-                cout << "enemy is level 4 and dark blue"<< endl;
                 break;
 
             case 5:
                 enemyColor = RED;
+                colorName = "Red";
                 size = 100.0f;
                 speed = 8;
-                cout << "enemy is level 5 and red" << endl;
                 break;
 
 
@@ -168,20 +188,47 @@ public:
 
     void explode(){
 
-        Explosion newexplosion = Explosion(this->location,this->size);
-        fxadmin.explosions.push_back(newexplosion);
+        active = false;
+        cout << "state of enemy: " << active << endl;
+        cout << "created explosion BOOM" << endl;
+        
 
     }
 
     void moveEnemy(){
 
+        if (!paused){
         initLoc.y += speed; 
+        }
 
     }
 
     void drawEnemy(){
 
+        if (active){
         DrawRectangleV(initLoc,{size,size},enemyColor);
+        }
+    }
+
+    void check_outside(){
+
+        if (initLoc.y > screenHeight + size && active){
+
+            active = false;
+
+        }
+
+    }
+
+
+    void debug(){
+
+        if (active){
+        DrawText("active", initLoc.x,initLoc.y,20,BLACK);
+        }
+        else{
+        DrawText("inactive",initLoc.x,initLoc.y,20,BLACK);
+        }
 
     }
 
@@ -190,6 +237,11 @@ public:
         enemyRect = {initLoc.x,initLoc.y,size,size};
         moveEnemy();
         drawEnemy();
+        check_outside();
+
+        if (dSystem) {
+        debug();
+        }
 
     }
 
@@ -205,7 +257,14 @@ public:
     int timer = 50;
     FxAdmin fxadmin;
 
-    public: void funcTimer(){
+    EnemyGen(FxAdmin fx){
+
+        fxadmin = fx;
+
+
+    }
+
+    void funcTimer(){
 
         if (timer > 0){
 
@@ -222,7 +281,7 @@ public:
 
     }
 
-    public: void generateEnemy(){
+    void generateEnemy(){
 
         random_device rd; 
         mt19937 gen(rd()); 
@@ -233,15 +292,18 @@ public:
 
         std::uniform_int_distribution<> int_dis(1, 5); 
         int random_int = int_dis(gen);
-        cout << random_int << endl;
         
-        Enemy newEnemy = Enemy(newLocation ,5.0f , random_int);
+        Enemy newEnemy = Enemy(newLocation ,5.0f ,random_int);
         enemies.push_back(newEnemy);
 
     } 
 
 
-    private: void updateEnemies() {
+    private: 
+    
+    void updateEnemies() {
+
+        //cout << "enemigos en array: " << enemies.size() << endl;
 
         for (auto& enemy : enemies) {
 
@@ -250,9 +312,34 @@ public:
 
     }
 
+    void delete_inactive(){
+
+
+            for (auto it = enemies.begin(); it != enemies.end(); ){
+
+                if (!it -> active){
+
+                    cout << "se eliminó: " << it -> colorName << endl;
+                    it = enemies.erase(it);
+
+
+                }
+                else {
+                    it++;
+                }
+
+            }
+
+        }
+        
+
+    
+
+
     public: void update(){
 
         funcTimer();
+        delete_inactive();
         updateEnemies();
 
     }
@@ -294,7 +381,6 @@ public:
             case 3: // location: TOP FACE
                 DrawEllipse(location.x,location.y,10.0f,15.0f,turbinaColor);
                 DrawEllipse(location.x+50,location.y,10.0f,15.0f,turbinaColor);
-                cout << "dibujando turbina de arriba"<< endl;
                 break;
 
             case 4: // location: RIGHT FACE
@@ -357,6 +443,17 @@ public:
             turbinaActiva = turbinas[3];
         }
 
+        if (IsKeyPressed(KEY_P)){
+
+            paused = !paused;
+
+        }
+
+        if (IsKeyPressed(KEY_O)){
+
+            dSystem = !dSystem;
+
+        }
 
         calculateFric();
         normalizeLocation();
@@ -385,21 +482,24 @@ public:
         }
     }
 
-    private: void checkCollision(auto group){
+    void checkCollision(auto& group) { // Asegúrate de pasar el grupo por referencia
 
-        playerRect = {location.x,location.y,50,50};
+        playerRect = { location.x, location.y, 50, 50 };
 
-        for (Enemy enemy : group.enemies) {
-        if (CheckCollisionRecs(playerRect,enemy.enemyRect) && !damaged){
+        // Usamos un iterador explícito para recorrer la lista de enemigos
+        for (auto it = group.enemies.begin(); it != group.enemies.end(); ++it) {
+            // Accedemos al objeto enemigo a través del iterador
+            auto& enemy = *it;
 
-            vida -= enemy.enemylevel;
-            damaged = true;
-            enemy.explode();
-
-        }
+            if (CheckCollisionRecs(playerRect, enemy.enemyRect) && !damaged) {
+                if (enemy.active) {
+                    vida -= enemy.enemylevel;
+                    damaged = true;
+                    enemy.explode();
+                }
+            }
         }
     }
-
     public: void updatePlayer(auto group) {
 
         runTimer();
@@ -416,8 +516,7 @@ public:
 //MARK: MAIN PROGRAM
 
 int main() {
-    const int screenWidth = 800;
-    const int screenHeight = 600;
+
 	const string playerName = "Player 1";
 	int playerPunteo = 200;
 	
@@ -434,12 +533,13 @@ int main() {
     player.speed = 5;
     player.initspeed = 5;
     string valor;
-
-    EnemyGen enemygenerator = EnemyGen();
+    string enemiesString;
+    string explosionString;
     
     DarkVoid background_void = DarkVoid();
     FxAdmin fxadmin1 = FxAdmin();
-    enemygenerator.fxadmin = fxadmin1;
+    EnemyGen enemygenerator = EnemyGen(fxadmin1);
+
 
     while (!WindowShouldClose()) {
 
@@ -450,6 +550,16 @@ int main() {
         }
         else {
             ClearBackground(BLACK);
+        }
+
+        if (dSystem){
+
+            enemiesString = "Active Enemies: " + to_string(enemygenerator.enemies.size());
+            explosionString = "Active Explosions: " + to_string(fxadmin1.explosions.size());
+
+            DrawText(enemiesString.c_str(),5,30,20,RED);
+            DrawText(explosionString.c_str(),5,60,20,RED);
+
         }
 
         valor = to_string(player.vida);
