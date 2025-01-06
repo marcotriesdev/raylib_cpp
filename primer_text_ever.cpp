@@ -99,7 +99,9 @@ public:
 
     void draw() {
 
-        DrawCircle(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
+        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
+        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+2,ORANGE);
+        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+3,YELLOW);
 
     }
 
@@ -290,8 +292,6 @@ public:
 
     std::vector <Enemy> enemies;
     int timer = 50;
-
-    EnemyGen();
 
     void funcTimer(){
 
@@ -593,7 +593,7 @@ int main() {
     string explosionString;
     
     DarkVoid background_void = DarkVoid();
-    EnemyGen enemygenerator = EnemyGen(fxadminmain);
+    EnemyGen enemygenerator = EnemyGen();
 
 
     while (!WindowShouldClose()) {
@@ -627,14 +627,14 @@ int main() {
         else{
 
             if (!dead) {
-            fxadmin1.addExplosion(player.location,50);
+            fxadminmain.addExplosion(player.location,50);
             dead = true;
             }
 
             drawGameOver();
         }
 
-									fxadminmain.updateExplosions();
+		fxadminmain.updateExplosions();
         
 		DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
         DrawText("SHIP DODGER 9000",5,5,40,BLUE);
