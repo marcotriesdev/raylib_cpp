@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <cmath>
 
 using namespace std;
 
@@ -18,6 +19,8 @@ class FxAdmin;
 const int screenWidth = 800;
 const int screenHeight = 600;
 Vector2 initPlayerPosition;
+
+const double math_pi = 3.14159265358979323846;
 
 bool paused = false;
 bool dSystem = false;
@@ -56,6 +59,90 @@ public:
 };
 
 
+//MARK: DEBRIS
+
+class Debris {
+public:
+
+    int debrisSize;
+    float debrisSizeF;
+    Vector2 initLocation;
+    Vector2 directionVector;
+    Color debrisColor;
+    Rectangle debrisRect;
+    int debrisSpeed;
+    bool distance; // 3D effect wow
+    bool active;
+
+    Debris(int size, Vector2 initLoc, Vector2 direction, Color color,int speed, bool bool3d){
+
+        debrisSize = size;
+        debrisSizeF = static_cast<float>(debrisSize);
+        initLocation = {initLoc.x,initLoc.y};
+        directionVector = {direction.x,direction.y};
+        debrisColor = color;
+        debrisRect = {initLocation.x,initLocation.y,debrisSizeF,debrisSizeF};
+        debrisSpeed = speed;
+        distance = bool3d;
+        active = true; 
+
+        if (distance){debrisSpeed *= 4.6;}
+
+    }
+
+    private: void moveDebris(){
+
+        initLocation.x += directionVector.x * debrisSpeed;
+        initLocation.y += directionVector.y * debrisSpeed;
+
+        debrisRect = {initLocation.x,initLocation.y,debrisSizeF,debrisSizeF};
+
+    }
+
+    //3D effect WOW!
+    void moveDistance(){
+
+        if (distance){ //approaches
+            
+            if (debrisSizeF < 100){
+                debrisSizeF += 3; 
+            }
+            else {
+                debrisSizeF = 100;
+            }        
+        }
+        else{ //gets farther away
+
+            if (debrisSizeF > 1){
+            debrisSizeF -= 0.5;
+            }
+            else {
+                debrisSizeF = 1;
+            }
+        }
+
+
+    }
+
+    void check_outside(){
+
+        if (initLocation.x < 0 || initLocation.x > screenWidth || initLocation.y < 0 || initLocation.y > screenHeight){
+
+            active = false;
+
+        }
+    }
+
+    public: void update(){
+
+        check_outside();
+        moveDebris();
+        moveDistance();
+        DrawRectangleRec(debrisRect,debrisColor);
+        
+    }
+};
+
 //MARK: EXPLOSION
 
 
@@ -67,21 +154,89 @@ public:
     float explosionSize;
     int growspeed;
     bool ended;
+    Color debrisColor;
+    vector<Debris> debrisObjects;
 
-    Explosion(Vector2 location,float size){
+
+    Explosion(Vector2 location,float size, Color color){
 
         explosionLocation = location;
         explosionSize = size;
-        growspeed = 50;
+        growspeed = 30;
         ended = false;
+        debrisColor = color;
 
-        initCout();
+        initDebris();
 
     }
 
-    void initCout(){
+    void initDebris(){
 
-        cout << "expllosion initialized" << endl;
+        random_device rd; 
+        mt19937 gen(rd()); 
+
+        std::uniform_int_distribution<> int_dis1(10, 20); 
+        int random_amount = int_dis1(gen);
+
+        for (int i = 0; i <= random_amount; i++){
+
+            std:: uniform_int_distribution<> int_dis2(5,20);
+            int random_size = int_dis2(gen);
+
+            std:: uniform_int_distribution<> int_dis3(1,360);
+            int random_angle = int_dis3(gen);
+
+            std:: uniform_int_distribution<> int_dis4(2,10);
+            int random_speed = int_dis4(gen);
+
+            std:: uniform_int_distribution<> int_dis5(0,1);
+            bool random_3d = int_dis5(gen);
+
+            float angle_radians = random_angle * (math_pi / 180.0f);
+            Vector2 newDirection;
+            newDirection.x = cos(angle_radians);
+            newDirection.y = sin(angle_radians);
+
+
+            Debris newdebris = Debris(random_size,explosionLocation,newDirection,debrisColor,random_speed,random_3d);
+            debrisObjects.push_back(newdebris);
+
+
+        }
+    }
+
+    void updateDebris(){
+
+        for (auto& debris : debrisObjects){
+
+            debris.update();
+
+        }
+
+    }
+
+
+    void deleteInactive(){
+
+        if (!debrisObjects.empty()){
+        for (auto it = debrisObjects.begin(); it != debrisObjects.end(); ){
+
+            if (!it -> active){
+
+                cout << "se eliminó debris inactivo" << endl;
+                it = debrisObjects.erase(it);
+
+            }
+            else {
+                it++;
+            }
+
+        }        
+        }
+        else {
+            ended = true;
+        }
+
     }
 
     void grow(){
@@ -91,9 +246,27 @@ public:
         }
         else {
 
-            ended = true;
             cout << "explosion ended";
         }
+
+    }
+
+
+    void debug(){
+
+        if (dSystem){
+
+            string debugString = to_string(debrisObjects.size());
+            DrawText(debugString.c_str(),explosionLocation.x,explosionLocation.y,20,MAROON);
+
+
+        }
+
+    }
+
+    void drawDebris() {
+
+
 
     }
 
@@ -102,12 +275,20 @@ public:
         DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
         DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+2,ORANGE);
         DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+3,YELLOW);
+        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+4,ORANGE);
+        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+5,YELLOW);
+
+
 
     }
 
     void update() {
 
+        updateDebris();
+        debug();
+        deleteInactive();
         if (!ended){
+        
         grow();
         draw();
         }
@@ -122,17 +303,38 @@ public:
     std::vector <Explosion> explosions;
 
 
-    void addExplosion(Vector2 location, int size){
+    void addExplosion(Vector2 location, int size, Color color){
 
-        Explosion newexplosion = Explosion(location,size);
+        Explosion newexplosion = Explosion(location,size,color);
         explosions.push_back(newexplosion);
         cout << "numero de explosiones: " << explosions.size() << endl;
 
     }
 
+    void deleteInactive(){
+
+
+        for (auto it = explosions.begin(); it != explosions.end(); ){
+
+            if (it -> ended){
+
+                cout << "se eliminó debris inactivo" << endl;
+                it = explosions.erase(it);
+
+            }
+            else {
+                it++;
+            }
+
+        }        
+        
+
+
+    }
+
     void updateExplosions(){
-        //cout << "probando probando fxadmin" << endl;
-        //cout << "numero de explosiones: " << explosions.size() << endl;
+
+        deleteInactive();
         for (auto& explosion : explosions){
 
             explosion.update();
@@ -227,7 +429,7 @@ public:
 
         active = false;
         cout << "created explosion BOOM" << endl;
-        fxadminmain.addExplosion(initLoc, size);
+        fxadminmain.addExplosion(initLoc, size,enemyColor);
         
 
     }
@@ -397,10 +599,12 @@ public:
     private: int turbinaActiva = turbinas[0];
     private: Color turbinaColor = {255,200,0,255};
 
+    public: Color playerColor = GREEN;
+
     
 
     private: void dibujarPlayer() {
-        DrawRectangleV(location,{50,50},GREEN);
+        DrawRectangleV(location,{50,50},playerColor);
     }
 
     private: void dibujarTurbina(){
@@ -612,7 +816,7 @@ int main() {
             enemiesString = "Active Enemies: " + to_string(enemygenerator.enemies.size());
             explosionString = "Active Explosions: " + to_string(fxadminmain.explosions.size());
 
-            DrawText(enemiesString.c_str(),5,30,20,RED);
+            DrawText(enemiesString.c_str(),5,35,20,RED);
             DrawText(explosionString.c_str(),5,60,20,RED);
 
         }
@@ -620,6 +824,7 @@ int main() {
         valor = to_string(player.vida);
 
         enemygenerator.update();
+        fxadminmain.updateExplosions();
 
         if (player.vida > 0){
             player.updatePlayer(enemygenerator);
@@ -627,14 +832,14 @@ int main() {
         else{
 
             if (!dead) {
-            fxadminmain.addExplosion(player.location,50);
+            fxadminmain.addExplosion(player.location,50,player.playerColor);
             dead = true;
             }
 
             drawGameOver();
         }
 
-		fxadminmain.updateExplosions();
+		
         
 		DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
         DrawText("SHIP DODGER 9000",5,5,40,BLUE);
