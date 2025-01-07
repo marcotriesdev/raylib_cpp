@@ -207,7 +207,7 @@ public:
 
     void updateDebris(){
 
-        for (auto& debris : debrisObjects){
+        for (Debris& debris : debrisObjects){
 
             debris.update();
 
@@ -219,7 +219,7 @@ public:
     void deleteInactive(){
 
         if (!debrisObjects.empty()){
-        for (auto it = debrisObjects.begin(); it != debrisObjects.end(); ){
+        for (std::vector<Debris>::iterator it = debrisObjects.begin(); it != debrisObjects.end(); ){
 
             if (!it -> active){
 
@@ -314,7 +314,7 @@ public:
     void deleteInactive(){
 
 
-        for (auto it = explosions.begin(); it != explosions.end(); ){
+        for (std::vector<Explosion>::iterator it = explosions.begin(); it != explosions.end(); ){
 
             if (it -> ended){
 
@@ -335,7 +335,7 @@ public:
     void updateExplosions(){
 
         deleteInactive();
-        for (auto& explosion : explosions){
+        for (Explosion& explosion : explosions){
 
             explosion.update();
             
@@ -536,7 +536,7 @@ public:
 
         //cout << "enemigos en array: " << enemies.size() << endl;
 
-        for (auto& enemy : enemies) {
+        for (Enemy& enemy : enemies) {
 
             enemy.update();
         }
@@ -546,7 +546,7 @@ public:
     void delete_inactive(){
 
 
-            for (auto it = enemies.begin(); it != enemies.end(); ){
+            for (std::vector<Enemy>::iterator it = enemies.begin(); it != enemies.end(); ){
 
                 if (!it -> active){
 
@@ -722,14 +722,14 @@ public:
         }
     }
 
-    void checkCollision(auto& group) { // Asegúrate de pasar el grupo por referencia
+    void checkCollision(EnemyGen& group) { // Asegúrate de pasar el grupo por referencia
 
         playerRect = { location.x, location.y, 50, 50 };
 
         // Usamos un iterador explícito para recorrer la lista de enemigos
-        for (auto it = group.enemies.begin(); it != group.enemies.end(); ++it) {
+        for (std::vector<Enemy>::iterator it = group.enemies.begin(); it != group.enemies.end(); ++it) {
             // Accedemos al objeto enemigo a través del iterador
-            auto& enemy = *it;
+            Enemy& enemy = *it;
 
             if (CheckCollisionRecs(playerRect, enemy.enemyRect) && !damaged) {
                 if (enemy.active) {
@@ -740,7 +740,7 @@ public:
             }
         }
     }
-    public: void updatePlayer(auto& group) {
+    public: void updatePlayer(EnemyGen& group) {
 
         runTimer();
         //cout << damageTimer << endl;
