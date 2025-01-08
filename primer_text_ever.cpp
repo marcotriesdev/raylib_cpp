@@ -781,7 +781,7 @@ int main() {
 	int playerPunteo = 200;
 	
 
-    InitWindow(screenWidth, screenHeight, "Ship Dodger");
+    InitWindow(screenWidth, screenHeight, "Ship Dodger 9000 v1.0");
 
     SetTargetFPS(60);
 
@@ -813,8 +813,8 @@ int main() {
 
         if (dSystem){
 
-            enemiesString = "Active Enemies: " + to_string(enemygenerator.enemies.size());
-            explosionString = "Active Explosions: " + to_string(fxadminmain.explosions.size());
+            enemiesString = "Active Containers: " + to_string(enemygenerator.enemies.size());
+            explosionString = "Active Explosion Fx: " + to_string(fxadminmain.explosions.size());
 
             DrawText(enemiesString.c_str(),5,35,20,RED);
             DrawText(explosionString.c_str(),5,60,20,RED);
@@ -842,7 +842,7 @@ int main() {
 		
         
 		DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
-        DrawText("SHIP DODGER 9000",5,5,40,BLUE);
+        DrawText("SHIP DODGER 9000 v1.0",5,5,40,BLUE);
 		DrawText(valor.c_str(), 30, 150, 40, LIME);
 		
         EndDrawing();
