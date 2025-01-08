@@ -1,29 +1,25 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Compilar y Ejecutar",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Habilitar el formateo de impresión para gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "Compilar C++ con raylib",
-            "miDebuggerPath": "C:\\raylib\\w64devkit\\bin\\gdb.exe",
-            "logging": {
-                "engineLogging": true
-            }
-        }
-    ]
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Compilar y ejecutar C++ con raylib",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${fileDirname}/${fileBasenameNoExtension}.exe",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${fileDirname}",
+			"environment": [],
+			"externalConsole": false,
+			"preLaunchTask": "Compilar C++ con raylib",
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Habilitar el modo de impresión de variables para GDB",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		}
+	]
 }

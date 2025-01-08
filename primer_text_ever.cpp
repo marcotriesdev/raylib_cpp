@@ -20,11 +20,80 @@ const int screenWidth = 800;
 const int screenHeight = 600;
 Vector2 initPlayerPosition;
 
+float level_speed[10] = {1.2f,1.4f,1.6f,1.7f,1.8f,1.9f,2.0f,2.2f,2.4f,2.5f};
+float global_speed = level_speed[0];
+int speed_int = 1; 
+
 const double math_pi = 3.14159265358979323846;
 
 bool paused = false;
 bool dSystem = false;
 bool dead = false;
+
+
+//MARK: Stamina Pickup
+
+class StaminaPickup {
+public:
+    Vector2 location;
+    float size = 15.0f;
+    float speed = 5.0f;
+    bool active = true;
+    Rectangle collisionRect;
+    
+
+    StaminaPickup(Vector2 loc){
+
+        location = loc;
+
+    }
+
+    void debugDraw(){
+
+        DrawRectangle(location.x-15,location.y-15,30,30,LIGHTGRAY);
+
+    }
+
+    void pickup(){
+
+        active = false;
+
+    }
+
+    void check_outside(){
+
+         if (location.y > screenHeight + size && active){
+
+            active = false;
+
+        }       
+
+    }
+
+    void draw(){
+        DrawCircleLines(location.x,location.y,size,PINK);
+        DrawCircleLines(location.x,location.y,size+2,PINK);
+        DrawCircleLines(location.x,location.y,size+4,PINK);
+        DrawCircleLines(location.x,location.y,size+6,PINK);
+
+    }
+
+    void move(){
+        location.y += speed;
+    }
+
+    void update(){
+
+        if (dSystem){debugDraw();} 
+        collisionRect = {location.x-15,location.y-15,size*2,size*2};
+        draw();
+        move();
+
+    }
+
+
+};
+
 
 //MARK: BACKGROUND
 
@@ -157,14 +226,16 @@ public:
     Color debrisColor;
     vector<Debris> debrisObjects;
 
+    bool isthrust;
 
-    Explosion(Vector2 location,float size, Color color){
+    Explosion(Vector2 location,float size, Color color, bool thrust = false){
 
         explosionLocation = location;
         explosionSize = size;
         growspeed = 30;
         ended = false;
         debrisColor = color;
+        isthrust = thrust;
 
         initDebris();
 
@@ -200,7 +271,6 @@ public:
 
             Debris newdebris = Debris(random_size,explosionLocation,newDirection,debrisColor,random_speed,random_3d);
             debrisObjects.push_back(newdebris);
-
 
         }
     }
@@ -241,12 +311,16 @@ public:
 
     void grow(){
 
-        if (explosionSize < 1000){
+        if (explosionSize < 1000 && !isthrust){
             explosionSize += growspeed;
         }
-        else {
+        else if (explosionSize < 100 && isthrust){
+            explosionSize += growspeed *0.5;
+        }
+        else if (explosionSize >= 100 && isthrust){
 
-            cout << "explosion ended";
+            ended = true;
+
         }
 
     }
@@ -257,7 +331,9 @@ public:
         if (dSystem){
 
             string debugString = to_string(debrisObjects.size());
+            string debugEnded = "Ended: " + to_string(ended);
             DrawText(debugString.c_str(),explosionLocation.x,explosionLocation.y,20,MAROON);
+            DrawText(debugEnded.c_str(),explosionLocation.x,explosionLocation.y+10,20,MAROON);
 
 
         }
@@ -272,23 +348,32 @@ public:
 
     void draw() {
 
-        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
-        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+2,ORANGE);
-        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+3,YELLOW);
-        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+4,ORANGE);
-        DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+5,YELLOW);
-
-
-
+        if (!isthrust){
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,YELLOW);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+2,ORANGE);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+3,YELLOW);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+4,ORANGE);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+5,YELLOW);
+            }
+        else{
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize,debrisColor);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+2,WHITE);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+3,debrisColor);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+4,WHITE);
+            DrawCircleLines(explosionLocation.x,explosionLocation.y,explosionSize+5,debrisColor);
+        }
     }
 
     void update() {
 
+        if (!isthrust){
         updateDebris();
-        debug();
+        }
+
         deleteInactive();
+        debug();
+
         if (!ended){
-        
         grow();
         draw();
         }
@@ -297,16 +382,23 @@ public:
 
 };
 
+//MARK: FXAdmin
 
 class FxAdmin {
 public:
     std::vector <Explosion> explosions;
 
 
-    void addExplosion(Vector2 location, int size, Color color){
+    void addExplosion(Vector2 location, int size, Color color,bool thrust = false){
 
-        Explosion newexplosion = Explosion(location,size,color);
-        explosions.push_back(newexplosion);
+        if (!thrust){
+            Explosion newexplosion = Explosion(location,size,color);
+            explosions.push_back(newexplosion);}
+        else{
+            Explosion newexplosion = Explosion(location,size,color,true);
+            explosions.push_back(newexplosion);}            
+        
+        
         cout << "numero de explosiones: " << explosions.size() << endl;
 
     }
@@ -437,7 +529,7 @@ public:
     void moveEnemy(){
 
         if (!paused){
-        initLoc.y += speed; 
+        initLoc.y += speed * global_speed; 
         }
 
     }
@@ -493,21 +585,59 @@ class EnemyGen {
 public:
 
     std::vector <Enemy> enemies;
+    std::vector <StaminaPickup> staminaGroup;
+
+    int timerDefault = 50;
     int timer = 50;
 
-    void funcTimer(){
+    int staminaTimerDefault = 10;
+    int staminaTimer = staminaTimerDefault;
+
+    void funcTimer(){ //FOR BOTH TIMERS, ENEMY AND STAMINAPICKUPS
 
         if (timer > 0){
-
-            timer -= 1;
-
+            timer--;
         }
 
         else if (timer <= 0) {
-
             generateEnemy();
-            timer = 50;
+            timer = timerDefault;
+        }
 
+        if (staminaTimer > 0){
+            staminaTimer--;
+        }
+        else if (staminaTimer <= 0){
+            generatePickup();
+            staminaTimer = staminaTimerDefault;
+        }
+
+    }
+
+
+
+    void timerDifficulty(){
+
+        switch (speed_int)
+        {
+        case 1:
+            timerDefault = 50;
+            break;
+        case 2:
+            timerDefault = 45;
+            break;
+        case 3:
+            timerDefault = 40;
+            break;
+        case 4:
+            timerDefault = 30;
+            break;
+        case 5:
+            timerDefault = 25;
+            break;
+        default:
+            timerDefault =  20;
+            break;       
         }
 
     }
@@ -529,31 +659,52 @@ public:
 
     } 
 
+    void generatePickup(){
+
+        random_device rd; 
+        mt19937 gen(rd()); 
+
+        uniform_real_distribution<> dis(0.0f, 800.0f); // Rango de 0 a 800 // Generar un número float aleatorio en el rango especificado float numeroRandom =
+        float numeroRandom = dis(gen);
+
+        Vector2 newLocation = {numeroRandom,-100.0f};
+
+        std::uniform_int_distribution<> int_dis(1, 10); 
+        int random_int = int_dis(gen);
+
+        if (random_int == 5){ //aquí se pueden meter otras condicionales para otros items segun el número obtenido
+            StaminaPickup newstaminaPickup = StaminaPickup(newLocation);
+            staminaGroup.push_back(newstaminaPickup);
+        }
+    } 
 
     private: 
     
     void updateEnemies() {
 
-        //cout << "enemigos en array: " << enemies.size() << endl;
-
         for (Enemy& enemy : enemies) {
-
             enemy.update();
         }
 
     }
 
+    void updateStaminaGroup(){
+
+        for (StaminaPickup& stamina : staminaGroup){
+
+            stamina.update();
+
+        }
+    }
+
     void delete_inactive(){
 
 
-            for (std::vector<Enemy>::iterator it = enemies.begin(); it != enemies.end(); ){
+            for (std::vector<Enemy>::iterator it = enemies.begin(); it != enemies.end();){
 
                 if (!it -> active){
-
                     cout << "se eliminó: " << it -> colorName << endl;
                     it = enemies.erase(it);
-
-
                 }
                 else {
                     it++;
@@ -563,15 +714,30 @@ public:
 
         }
         
+    void delete_inactive_staminaPickups(){
 
-    
 
+            for (std::vector<StaminaPickup>::iterator it = staminaGroup.begin(); it != staminaGroup.end();){
 
+                if (!it -> active){
+                    cout << "se eliminó: staminapickup"<< endl;
+                    it = staminaGroup.erase(it);
+                }
+                else {
+                    it++;
+                }
+
+            }
+
+        }        
     public: void update(){
 
         funcTimer();
+        
         delete_inactive();
+        delete_inactive_staminaPickups();
         updateEnemies();
+        updateStaminaGroup();
 
     }
 
@@ -582,24 +748,34 @@ public:
 class Player {
 public:
 
+    int vida;
+    Vector2 location;
+    
+    float speed;
+    float initspeed;
+    Color playerColor = GREEN;
 
-    public: int vida;
-    public: Vector2 location;
-    private: Vector2 movement;
-    public: float speed;
-    public: float initspeed;
-    private: float friction = 0.5f;
-    private: Rectangle playerRect = {location.x,location.y,50,50};
+    bool thrust = false;
+    float thrustMulti = 1.0f;
+    float thrustTurbina = 1.0f;
+    float stamina = 50.0f;
+    float maxstamina = stamina;
+    float staminaDrain = 0.5f;
 
-    private: int damageTimer = 25;
-    private: int initTimer = 25;
-    private: bool damaged = false;
+private:
+    float friction = 0.5f;
+    Rectangle playerRect = {location.x,location.y,50,50};
+    Vector2 movement;
 
-    private: int turbinas[5] = {0,1,2,3,4};
-    private: int turbinaActiva = turbinas[0];
-    private: Color turbinaColor = {255,200,0,255};
+    int damageTimer = 25;
+    int initTimer = 25;
+    bool damaged = false;
 
-    public: Color playerColor = GREEN;
+    int turbinas[5] = {0,1,2,3,4};
+    int turbinaActiva = turbinas[0];
+    Color turbinaColor = {255,200,0,255};
+
+
 
     
 
@@ -612,23 +788,23 @@ public:
         switch (turbinaActiva)
         {
             case 3: // location: TOP FACE
-                DrawEllipse(location.x,location.y,10.0f,15.0f,turbinaColor);
-                DrawEllipse(location.x+50,location.y,10.0f,15.0f,turbinaColor);
+                DrawEllipse(location.x,location.y,10.0f,15.0f+thrustTurbina,turbinaColor);
+                DrawEllipse(location.x+50,location.y,10.0f,15.0f+thrustTurbina,turbinaColor);
                 break;
 
             case 4: // location: RIGHT FACE
-                DrawEllipse(location.x+50,location.y,15.0f,10.0f,turbinaColor);
-                DrawEllipse(location.x+50,location.y+50,15.0f,10.0f,turbinaColor);
+                DrawEllipse(location.x+50,location.y,15.0f+thrustTurbina,10.0f,turbinaColor);
+                DrawEllipse(location.x+50,location.y+50,15.0f+thrustTurbina,10.0f,turbinaColor);
                 break;
 
             case 1: // location: BOTTOM FACE
-                DrawEllipse(location.x,location.y+50,10.0f,15.0f,turbinaColor);
-                DrawEllipse(location.x+50,location.y+50,10.0f,15.0f,turbinaColor);
+                DrawEllipse(location.x,location.y+50,10.0f,15.0f+thrustTurbina,turbinaColor);
+                DrawEllipse(location.x+50,location.y+50,10.0f,15.0f+thrustTurbina,turbinaColor);
                 break;
 
             case 2: // location: LEFT FACE
-                DrawEllipse(location.x,location.y,15.0f,10.0f,turbinaColor);
-                DrawEllipse(location.x,location.y+50,15.0f,10.0f,turbinaColor);
+                DrawEllipse(location.x,location.y,15.0f+thrustTurbina,10.0f,turbinaColor);
+                DrawEllipse(location.x,location.y+50,15.0f+thrustTurbina,10.0f,turbinaColor);
                 break;
 
             case 0:
@@ -637,6 +813,38 @@ public:
         }
         
 
+
+    }
+
+    private: void thrustFunc(){
+
+        if (stamina <= 0){
+            stamina = 0;
+            thrustMulti = 1.0f;
+            thrustTurbina = 1.0f;
+        }
+
+        if (IsKeyPressed(KEY_SPACE) && stamina){
+            fxadminmain.addExplosion(location,5,SKYBLUE,true);
+        }
+
+        if (IsKeyDown(KEY_SPACE)){
+
+            if (stamina > 0){
+            stamina -= staminaDrain;
+            thrustMulti = 2.5f;
+            thrustTurbina = 15.0f;}
+
+
+        }
+        else if (IsKeyDown(KEY_SPACE) && stamina <= 0){
+            thrustMulti = 1.0f;
+            thrustTurbina = 1.0f;
+        }
+        else {
+            thrustMulti = 1.0f;
+            thrustTurbina = 1.0f;            
+        }
 
     }
 
@@ -677,19 +885,16 @@ public:
         }
 
         if (IsKeyPressed(KEY_P)){
-
             paused = !paused;
 
         }
 
         if (IsKeyPressed(KEY_O)){
-
             dSystem = !dSystem;
 
         }
 
         if (IsKeyPressed(KEY_K)){
-
             vida -= 90;
             cout << "KILLED HIMSELF" << endl;
 
@@ -698,7 +903,7 @@ public:
         calculateFric();
         normalizeLocation();
 
-        location += movement *speed;
+        location += movement * speed * thrustMulti;
 
     }
 
@@ -739,12 +944,38 @@ public:
                 }
             }
         }
+        for (std::vector<StaminaPickup>::iterator it = group.staminaGroup.begin(); it != group.staminaGroup.end(); ++it) {
+            // Accedemos al objeto enemigo a través del iterador
+            StaminaPickup& stpickup = *it;
+
+            if (CheckCollisionRecs(playerRect, stpickup.collisionRect) && !damaged) {
+                if (stpickup.active) {
+                    if (stamina < maxstamina){
+                    stamina += 5;
+                    stpickup.pickup();
+                    }
+                }
+            }
+        }
     }
+
+    void limitMaxStamina(){
+
+        if (stamina > maxstamina){
+
+            stamina = maxstamina;
+
+        }
+
+    }
+
     public: void updatePlayer(EnemyGen& group) {
 
         runTimer();
+        thrustFunc();
         //cout << damageTimer << endl;
         checkCollision(group);
+        limitMaxStamina();
         input();
         dibujarTurbina();
         dibujarPlayer();
@@ -773,6 +1004,74 @@ void drawGameOver(){
 
 }
 
+void change_level(){
+
+    cout << "listening level changes: " << global_speed << endl;
+
+    if (IsKeyPressed(KEY_ONE)){
+
+        global_speed = level_speed[0];
+        speed_int = 1;
+
+    }
+    else if (IsKeyPressed(KEY_TWO)){
+
+        global_speed = level_speed[1];
+        speed_int = 2;
+
+    }
+    else if (IsKeyPressed(KEY_THREE)){
+
+        global_speed = level_speed[2];
+        speed_int = 3;
+
+    }
+    else if (IsKeyPressed(KEY_FOUR)){
+
+        global_speed = level_speed[3];
+        speed_int = 4;
+
+    }
+    else if (IsKeyPressed(KEY_FIVE)){
+
+        global_speed = level_speed[4];
+        speed_int = 5;
+
+    }
+    else if (IsKeyPressed(KEY_SIX)){
+
+        global_speed = level_speed[5];
+        speed_int = 6;
+
+    }
+    else if (IsKeyPressed(KEY_SEVEN)){
+
+        global_speed = level_speed[6];
+        speed_int = 7;
+
+    }
+    else if (IsKeyPressed(KEY_EIGHT)){
+
+        global_speed = level_speed[7];
+        speed_int = 8;
+
+    }
+    else if (IsKeyPressed(KEY_NINE)){
+
+        global_speed = level_speed[8];
+        speed_int = 9;
+
+    }
+    else if (IsKeyPressed(KEY_ZERO)){
+
+        global_speed = level_speed[9];
+        speed_int = 10;
+
+    }
+
+
+}
+
 //MARK: MAIN PROGRAM
 
 int main() {
@@ -781,7 +1080,7 @@ int main() {
 	int playerPunteo = 200;
 	
 
-    InitWindow(screenWidth, screenHeight, "Ship Dodger 9000 v1.0");
+    InitWindow(screenWidth, screenHeight, "Ship Dodger 9000 v1.22");
 
     SetTargetFPS(60);
 
@@ -792,9 +1091,13 @@ int main() {
     player.location = initPlayerPosition;
     player.speed = 5;
     player.initspeed = 5;
+
     string valor;
     string enemiesString;
-    string explosionString;
+    string explosionString; 
+    string levelString;
+
+    int staminaGUI;
     
     DarkVoid background_void = DarkVoid();
     EnemyGen enemygenerator = EnemyGen();
@@ -813,11 +1116,15 @@ int main() {
 
         if (dSystem){
 
+            change_level();
+
             enemiesString = "Active Containers: " + to_string(enemygenerator.enemies.size());
             explosionString = "Active Explosion Fx: " + to_string(fxadminmain.explosions.size());
+            levelString = "Level: " + to_string(global_speed);
 
-            DrawText(enemiesString.c_str(),5,35,20,RED);
-            DrawText(explosionString.c_str(),5,60,20,RED);
+            DrawText(enemiesString.c_str(),5,235,20,RED);
+            DrawText(explosionString.c_str(),5,260,20,RED);
+            DrawText(levelString.c_str(),5,280,20,RED);
 
         }
 
@@ -838,12 +1145,15 @@ int main() {
 
             drawGameOver();
         }
+	
+        DrawText("SHIP DODGER 9000 v1.22",5,5,40,BLUE);
+        DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
+		DrawText(valor.c_str(), 30, 140, 40, LIME);
+        DrawText("STAMINA: ", 30, 180, 30, MAROON);
 
-		
-        
-		DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
-        DrawText("SHIP DODGER 9000 v1.0",5,5,40,BLUE);
-		DrawText(valor.c_str(), 30, 150, 40, LIME);
+        staminaGUI = (player.stamina/player.maxstamina)* 100;
+        DrawRectangle(30,220,staminaGUI,10,PINK);
+
 		
         EndDrawing();
     }
