@@ -1296,6 +1296,8 @@ int main() {
             DrawText("SHIP DODGER 9000 v1.22",5,5,40,BLUE);
             DrawText("LIFE POINTS: ", 30, 80, 30, MAROON);
             DrawText(valor.c_str(), 30, 120, 40, LIME);
+            DrawText("press [P] for Pause and Controls",20,50,20,RED);
+            
             
 
             DrawText("LEVEL", screenWidth*0.8, 50, 30, MAROON);
