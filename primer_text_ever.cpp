@@ -25,7 +25,7 @@ float global_speed = level_speed[0];
 int speed_int = 1; 
 int total_enemies = 0;
 
-Color grisito = {2,2,2,200};
+Color grisito = {2,2,2,240};
 
 float global_void_offset = 0.0f;
 
@@ -36,6 +36,7 @@ bool dSystem = false;
 bool dead = false;
 bool startMenuPlayed = false;
 bool win = false;
+bool startfade = false;
 
 //MARK: Stamina Pickup
 
@@ -1181,24 +1182,43 @@ void victoryScreen(){
 
 void startMenu(){
 
-    DrawText("SHIP DODGER 9000",(screenWidth/2)-220,(screenHeight/2)-60,50,BLUE);
-    DrawText("Press [ENTER] to start",(screenWidth/2)-270,(screenHeight/2)+10,50,RED);
-
-    if (IsKeyPressed(KEY_ENTER)){
+    if (startfade && grisito.a > 0){
+        grisito.a -= 5;
+    }
+    else if (startfade && grisito.a <= 0){
+        startfade = false;
         startMenuPlayed = true;
     }
+
+    DrawRectangle(1,1,800,600,grisito);
+    DrawText("SHIP DODGER 9000",(screenWidth/2)-220,(screenHeight/2)-60,50,BLUE);
+    DrawText("Press [ENTER] to start",(screenWidth/2)-270,(screenHeight/2)+10,50,RED);
+    DrawText("-Controls-",(screenWidth/2)-270,(screenHeight/2)+50+20,30,GOLD);
+    DrawText("- WASD or Arrows to move",(screenWidth/2)-270,(screenHeight/2)+100+10,20,GOLD);
+    DrawText("- SPACE to Dash",(screenWidth/2)-270,(screenHeight/2)+130+10,20,GOLD);
+    DrawText("- ESC to exit",(screenWidth/2)-270,(screenHeight/2)+160+10,20,GOLD);
+
+
+    if (IsKeyPressed(KEY_ENTER)){
+
+        startfade = true;
+        
+    }
+
+
 
 }
 
 void pauseMenu(){
 
+    grisito = {2,2,2,220};
     DrawRectangle((screenWidth/2)-300,(screenHeight/2)-150,600,400,grisito);
     DrawText("PAUSED",(screenWidth/2)-220,(screenHeight/2)-80,50,BLUE);
     DrawText("Press [P] to return",(screenWidth/2)-270,(screenHeight/2)-10,50,GOLD);
     DrawText("-Controls-",(screenWidth/2)-270,(screenHeight/2)+50,30,GOLD);
-    DrawText("- WASD or Arrows to move",(screenWidth/2)-270,(screenHeight/2)+80,20,GOLD);
-    DrawText("- SPACE to Dash",(screenWidth/2)-270,(screenHeight/2)+100,20,GOLD);
-    DrawText("- ESC to exit",(screenWidth/2)-270,(screenHeight/2)+120,20,GOLD);
+    DrawText("- WASD or Arrows to move",(screenWidth/2)-270,(screenHeight/2)+100,20,GOLD);
+    DrawText("- SPACE to Dash",(screenWidth/2)-270,(screenHeight/2)+130,20,GOLD);
+    DrawText("- ESC to exit",(screenWidth/2)-270,(screenHeight/2)+160,20,GOLD);
     
 
 }
@@ -1241,7 +1261,7 @@ int main() {
 
         BeginDrawing();
         
-        
+        //cout << to_string(grisito.a);
         if (background_void.growVoid()){
             ClearBackground(WHITE);
         }
