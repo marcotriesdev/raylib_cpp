@@ -301,7 +301,6 @@ public:
 
             if (!it -> active){
 
-                cout << "se eliminó debris inactivo" << endl;
                 it = debrisObjects.erase(it);
 
             }
@@ -407,7 +406,6 @@ public:
             explosions.push_back(newexplosion);}            
         
         
-        cout << "numero de explosiones: " << explosions.size() << endl;
 
     }
 
@@ -418,7 +416,6 @@ public:
 
             if (it -> ended){
 
-                cout << "se eliminó debris inactivo" << endl;
                 it = explosions.erase(it);
 
             }
@@ -528,7 +525,6 @@ public:
     void explode(){
 
         active = false;
-        cout << "created explosion BOOM" << endl;
         fxadminmain.addExplosion(initLoc, size,enemyColor);
         
 
@@ -711,7 +707,6 @@ public:
             for (std::vector<Enemy>::iterator it = enemies.begin(); it != enemies.end();){
 
                 if (!it -> active){
-                    cout << "se eliminó: " << it -> colorName << endl;
                     it = enemies.erase(it);
                     total_enemies++;
                 }
@@ -729,7 +724,6 @@ public:
             for (std::vector<StaminaPickup>::iterator it = staminaGroup.begin(); it != staminaGroup.end();){
 
                 if (!it -> active){
-                    cout << "se eliminó: staminapickup"<< endl;
                     it = staminaGroup.erase(it);
                 }
                 else {
@@ -912,7 +906,6 @@ private:
 
         if (IsKeyPressed(KEY_K)){
             vida -= 90;
-            cout << "KILLED HIMSELF" << endl;
 
         }
 
@@ -990,7 +983,6 @@ private:
         if (!paused) {
             runTimer();
             thrustFunc();
-            //cout << damageTimer << endl;
             checkCollision(group);
             }
         limitMaxStamina();
@@ -1016,6 +1008,7 @@ void drawGameOver(){
         dead = false;
         win = false;
         startMenuPlayed = false;
+        total_enemies = 0;
         main();
 
     }
@@ -1179,6 +1172,7 @@ void victoryScreen(){
         dead = false;
         win = false;
         startMenuPlayed = false;
+        total_enemies = 0;
         main();
 
     }
@@ -1306,7 +1300,7 @@ int main() {
 
             DrawText("LEVEL", screenWidth*0.8, 50, 30, MAROON);
             levelString = to_string(speed_int);
-            cout << speed_int;
+
             DrawText(levelString.c_str(),screenWidth*0.8 +50,80,50,RED);
 
             DrawText("STAMINA: ", 30, 180, 30, MAROON);
