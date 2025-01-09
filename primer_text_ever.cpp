@@ -20,16 +20,22 @@ const int screenWidth = 800;
 const int screenHeight = 600;
 Vector2 initPlayerPosition;
 
-float level_speed[10] = {1.2f,1.4f,1.6f,1.7f,1.8f,1.9f,2.0f,2.2f,2.4f,2.5f};
+float level_speed[10] = {1.0f,1.1f,1.2f,1.3f,1.4f,1.5f,1.6f,1.7f,1.8f,2.0f};
 float global_speed = level_speed[0];
 int speed_int = 1; 
+int total_enemies = 0;
+
+Color grisito = {2,2,2,200};
+
+float global_void_offset = 0.0f;
 
 const double math_pi = 3.14159265358979323846;
 
 bool paused = false;
 bool dSystem = false;
 bool dead = false;
-
+bool startMenuPlayed = false;
+bool win = false;
 
 //MARK: Stamina Pickup
 
@@ -95,7 +101,7 @@ public:
 };
 
 
-//MARK: BACKGROUND
+//MARK: BACKG void
 
 class DarkVoid {
 public:
@@ -103,16 +109,18 @@ public:
     int size = 1;
     int growValue = 8;
     bool black = true;
+    float offset = global_void_offset;
 
     bool growVoid() {
+        offset = global_void_offset;
 
         if (size < 800){
 
             if (black){
-                DrawCircle(200,200,size,BLACK);
+                DrawCircle(200,200+offset,size,BLACK);
             }
             else {
-                DrawCircle(200,200,size,WHITE);
+                DrawCircle(200,200+offset,size,WHITE);
             }
 
             size += growValue;
@@ -705,6 +713,7 @@ public:
                 if (!it -> active){
                     cout << "se eliminó: " << it -> colorName << endl;
                     it = enemies.erase(it);
+                    total_enemies++;
                 }
                 else {
                     it++;
@@ -732,12 +741,17 @@ public:
         }        
     public: void update(){
 
-        funcTimer();
+        if (!paused){
+            funcTimer();
+            updateEnemies();
+            updateStaminaGroup();
+            }
         
         delete_inactive();
         delete_inactive_staminaPickups();
-        updateEnemies();
-        updateStaminaGroup();
+        timerDifficulty();
+        
+
 
     }
 
@@ -863,25 +877,27 @@ private:
 
         turbinaActiva = turbinas[0];
 
-        if (IsKeyDown(KEY_A)){
-            movement.x -= 1;
-            speed = initspeed;
-            turbinaActiva = turbinas[4];
-        }
-        if (IsKeyDown(KEY_D)){
-            movement.x += 1;
-            speed = initspeed;
-            turbinaActiva = turbinas[2];
-        }
-        if (IsKeyDown(KEY_W)){
-            movement.y -= 1;
-            speed = initspeed;
-            turbinaActiva = turbinas[1];
-        }
-        if (IsKeyDown(KEY_S)){
-            movement.y += 1;
-            speed = initspeed;
-            turbinaActiva = turbinas[3];
+        if (!paused){
+            if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)){
+                movement.x -= 1;
+                speed = initspeed;
+                turbinaActiva = turbinas[4];
+            }
+            if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)){
+                movement.x += 1;
+                speed = initspeed;
+                turbinaActiva = turbinas[2];
+            }
+            if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)){
+                movement.y -= 1;
+                speed = initspeed;
+                turbinaActiva = turbinas[1];
+            } 
+            if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)){
+                movement.y += 1;
+                speed = initspeed;
+                turbinaActiva = turbinas[3];
+            }
         }
 
         if (IsKeyPressed(KEY_P)){
@@ -971,10 +987,12 @@ private:
 
     public: void updatePlayer(EnemyGen& group) {
 
-        runTimer();
-        thrustFunc();
-        //cout << damageTimer << endl;
-        checkCollision(group);
+        if (!paused) {
+            runTimer();
+            thrustFunc();
+            //cout << damageTimer << endl;
+            checkCollision(group);
+            }
         limitMaxStamina();
         input();
         dibujarTurbina();
@@ -988,8 +1006,6 @@ private:
 
 void drawGameOver(){
 
-    //Color gameoverColor = Color(0,0,0,255);
-
     DrawText("Game Over",screenWidth/3,screenHeight/2,40,RED);
 
     DrawText("Press (R) to restart",screenWidth/3-50,screenHeight/2 + 100,45,RED);
@@ -998,15 +1014,16 @@ void drawGameOver(){
     if (IsKeyPressed(KEY_R)){
 
         dead = false;
+        win = false;
+        startMenuPlayed = false;
         main();
 
     }
 
 }
 
-void change_level(){
+void debug_change_level(){
 
-    cout << "listening level changes: " << global_speed << endl;
 
     if (IsKeyPressed(KEY_ONE)){
 
@@ -1072,6 +1089,126 @@ void change_level(){
 
 }
 
+void change_level(){
+
+    if (total_enemies < 20){
+        
+        global_speed = level_speed[0];
+        speed_int = 1;
+        global_void_offset += 0.1;
+
+
+    }
+    else if (total_enemies < 50){
+
+        global_speed = level_speed[1];
+        speed_int = 2;
+
+    }
+    else if (total_enemies < 70){
+
+        global_speed = level_speed[2];
+        speed_int = 3;
+
+    }
+    else if (total_enemies < 100){
+
+        global_speed = level_speed[3];
+        speed_int = 4;
+
+    }
+    else if (total_enemies < 130){
+
+        global_speed = level_speed[4];
+        speed_int = 5;
+
+    }
+    else if (total_enemies < 160){
+
+        global_speed = level_speed[5];
+        speed_int = 6;
+
+    }
+    else if (total_enemies < 190){
+
+        global_speed = level_speed[6];
+        speed_int = 7;
+        global_void_offset += 0.1;
+
+    }
+    else if (total_enemies < 210){
+
+        global_speed = level_speed[7];
+        speed_int = 8;
+        global_void_offset += 0.2;
+
+    }
+    else if (total_enemies < 240){
+
+        global_speed = level_speed[8];
+        speed_int = 9;
+        global_void_offset += 0.2;
+
+
+    }
+    else if (total_enemies < 270){
+
+        global_speed = level_speed[9];
+        speed_int = 10;
+        global_void_offset += 0.2;
+
+    }
+
+    else if (total_enemies < 320){
+
+        win = true;
+
+    }
+
+    
+
+}
+
+void victoryScreen(){
+
+    DrawText("YOU WON!",(screenWidth/2)-220,(screenHeight/2)-60,50,BLUE);
+    DrawText("Press [ENTER] to Restart or [ESC] to exit",(screenWidth/2)-270,(screenHeight/2)+10,50,RED);
+
+    if (IsKeyPressed(KEY_ENTER)){
+
+        dead = false;
+        win = false;
+        startMenuPlayed = false;
+        main();
+
+    }
+}
+
+
+void startMenu(){
+
+    DrawText("SHIP DODGER 9000",(screenWidth/2)-220,(screenHeight/2)-60,50,BLUE);
+    DrawText("Press [ENTER] to start",(screenWidth/2)-270,(screenHeight/2)+10,50,RED);
+
+    if (IsKeyPressed(KEY_ENTER)){
+        startMenuPlayed = true;
+    }
+
+}
+
+void pauseMenu(){
+
+    DrawRectangle((screenWidth/2)-300,(screenHeight/2)-150,600,400,grisito);
+    DrawText("PAUSED",(screenWidth/2)-220,(screenHeight/2)-80,50,BLUE);
+    DrawText("Press [P] to return",(screenWidth/2)-270,(screenHeight/2)-10,50,GOLD);
+    DrawText("-Controls-",(screenWidth/2)-270,(screenHeight/2)+50,30,GOLD);
+    DrawText("- WASD or Arrows to move",(screenWidth/2)-270,(screenHeight/2)+80,20,GOLD);
+    DrawText("- SPACE to Dash",(screenWidth/2)-270,(screenHeight/2)+100,20,GOLD);
+    DrawText("- ESC to exit",(screenWidth/2)-270,(screenHeight/2)+120,20,GOLD);
+    
+
+}
+
 //MARK: MAIN PROGRAM
 
 int main() {
@@ -1096,6 +1233,9 @@ int main() {
     string enemiesString;
     string explosionString; 
     string levelString;
+    string amount_enemies;
+    string enemytimerstring;
+    
 
     int staminaGUI;
     
@@ -1107,53 +1247,84 @@ int main() {
 
         BeginDrawing();
         
+        
         if (background_void.growVoid()){
             ClearBackground(WHITE);
         }
         else {
             ClearBackground(BLACK);
-        }
+            }
+        
 
-        if (dSystem){
+        if (!startMenuPlayed){
 
-            change_level();
-
-            enemiesString = "Active Containers: " + to_string(enemygenerator.enemies.size());
-            explosionString = "Active Explosion Fx: " + to_string(fxadminmain.explosions.size());
-            levelString = "Level: " + to_string(global_speed);
-
-            DrawText(enemiesString.c_str(),5,235,20,RED);
-            DrawText(explosionString.c_str(),5,260,20,RED);
-            DrawText(levelString.c_str(),5,280,20,RED);
-
-        }
-
-        valor = to_string(player.vida);
-
-        enemygenerator.update();
-        fxadminmain.updateExplosions();
-
-        if (player.vida > 0){
-            player.updatePlayer(enemygenerator);
-        }
-        else{
-
-            if (!dead) {
-            fxadminmain.addExplosion(player.location,50,player.playerColor);
-            dead = true;
+            startMenu();
             }
 
-            drawGameOver();
-        }
-	
-        DrawText("SHIP DODGER 9000 v1.22",5,5,40,BLUE);
-        DrawText("LIFE POINTS: ", 30, 100, 30, MAROON);
-		DrawText(valor.c_str(), 30, 140, 40, LIME);
-        DrawText("STAMINA: ", 30, 180, 30, MAROON);
+        else if (startMenuPlayed && !win){
 
-        staminaGUI = (player.stamina/player.maxstamina)* 100;
-        DrawRectangle(30,220,staminaGUI,10,PINK);
+            if (dSystem){
 
+                debug_change_level();
+
+                enemiesString = "Active Containers: " + to_string(enemygenerator.enemies.size());
+                explosionString = "Active Explosion Fx: " + to_string(fxadminmain.explosions.size());
+                amount_enemies = "Enemies Dead: " + to_string(total_enemies);
+                enemytimerstring = "Enemy Timer: " + to_string(enemygenerator.timerDefault);
+                
+
+                DrawText(enemiesString.c_str(),5,235,20,RED);
+                DrawText(explosionString.c_str(),5,260,20,RED);
+                DrawText(amount_enemies.c_str(),5,280,20,RED);
+                DrawText(enemytimerstring.c_str(),5,300,20,RED);
+                
+
+            }
+
+            valor = to_string(player.vida);
+
+            enemygenerator.update();
+            fxadminmain.updateExplosions();
+
+            if (player.vida > 0){
+                player.updatePlayer(enemygenerator);
+            }
+            else{
+
+                if (!dead) {
+                fxadminmain.addExplosion(player.location,50,player.playerColor);
+                dead = true;
+                }
+
+                drawGameOver();
+            }
+        
+            DrawText("SHIP DODGER 9000 v1.22",5,5,40,BLUE);
+            DrawText("LIFE POINTS: ", 30, 80, 30, MAROON);
+            DrawText(valor.c_str(), 30, 120, 40, LIME);
+            
+
+            DrawText("LEVEL", screenWidth*0.8, 50, 30, MAROON);
+            levelString = to_string(speed_int);
+            cout << speed_int;
+            DrawText(levelString.c_str(),screenWidth*0.8 +50,80,50,RED);
+
+            DrawText("STAMINA: ", 30, 180, 30, MAROON);
+            staminaGUI = (player.stamina/player.maxstamina)* 100; //Actualizar tamaño de stamina con regla de 3 
+            DrawRectangleLines(28,219,102,12,BLACK); // Lineas negritas alrededor del rosadito
+            DrawRectangle(30,220,staminaGUI,10,PINK);
+
+            if (paused) {
+                pauseMenu();
+                }
+            else {
+                change_level();
+                }
+            }
+        
+        else if (startMenuPlayed && win){
+            victoryScreen();
+            }
 		
         EndDrawing();
     }
