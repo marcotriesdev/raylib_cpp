@@ -1290,10 +1290,8 @@ int main() {
                 DrawText(enemiesString.c_str(),5,235,20,RED);
                 DrawText(explosionString.c_str(),5,260,20,RED);
                 DrawText(amount_enemies.c_str(),5,280,20,RED);
-                DrawText(enemytimerstring.c_str(),5,300,20,RED);
-                
-
-            }
+                DrawText(enemytimerstring.c_str(),5,300,20,RED);       
+                }
 
             valor = to_string(player.vida);
 
