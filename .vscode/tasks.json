@@ -11,13 +11,16 @@
 				"C:\\raylib\\raylib\\src",
 				"${file}",
 				"-o",
-				"${fileDirname}\\${fileBasenameNoExtension}.exe",
+				"${fileDirname}\\${fileBasenameNoExtension}_staticlibs.exe",
 				"-L",
 				"C:\\raylib\\raylib\\src",
 				"-lraylib",
 				"-lopengl32",
 				"-lgdi32",
-				"-lwinmm"
+				"-lwinmm", 
+				"-static", //AGREGADO PARA INCLUIR LIBRERÍAS ESTÁTICAS QUE FUNCIONEN EN CUALQUIER PC
+				"-static-libgcc", //AGREGADO PARA INCLUIR LIBRERÍAS ESTÁTICAS QUE FUNCIONEN EN CUALQUIER PC
+				"-static-libstdc++" //AGREGADO PARA INCLUIR LIBRERÍAS ESTÁTICAS QUE FUNCIONEN EN CUALQUIER PC
 			],
 			"group": "build",
 			"problemMatcher": [
